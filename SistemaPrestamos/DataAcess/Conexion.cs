@@ -4,9 +4,10 @@ namespace DataAcess
 {
     public class Conexion
     {
-        private string cadena = "Server=.;Database=SistemaPrestamos;Integrated Security=True;";
+        private static string cadena =
+            "Server=.;Database=SistemaPrestamos;Integrated Security=True;";
 
-        public SqlConnection ObtenerConexion()
+        public static SqlConnection ObtenerConexion()
         {
             return new SqlConnection(cadena);
         }

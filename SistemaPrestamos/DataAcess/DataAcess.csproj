@@ -46,6 +46,10 @@
   <ItemGroup>
     <Compile Include="ClienteDAO.cs" />
     <Compile Include="Conexion.cs" />
+    <Compile Include="FondoBaseDAO.cs" />
+    <Compile Include="MoraDAO.cs" />
+    <Compile Include="PagoDAO.cs" />
+    <Compile Include="PrestamoDAO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
