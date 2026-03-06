@@ -9,9 +9,7 @@ namespace BusinessLogic
     {
         private PrestamoDAO prestamoDAO = new PrestamoDAO();
         private FondoBaseDAO fondoDAO = new FondoBaseDAO();
-        private PagoDAO pagoDAO = new PagoDAO();
 
-        // Calcula la tasa de interés según el plazo
         public decimal ObtenerTasa(int plazoMeses)
         {
             if (plazoMeses >= 1 && plazoMeses <= 3) return 10m;
@@ -20,7 +18,6 @@ namespace BusinessLogic
             return 5m;
         }
 
-        // Calcula la cuota mensual (fórmula francesa)
         public decimal CalcularCuota(decimal monto, decimal tasaAnual, int plazoMeses)
         {
             decimal tasaMensual = (tasaAnual / 100m) / 12m;
@@ -31,7 +28,6 @@ namespace BusinessLogic
             return Math.Round((decimal)cuota, 2);
         }
 
-        // Genera la tabla de amortización
         public List<Pago> GenerarTablaAmortizacion(Prestamo p)
         {
             var tabla = new List<Pago>();
@@ -43,7 +39,6 @@ namespace BusinessLogic
                 decimal interes = Math.Round(saldo * tasaMensual, 2);
                 decimal capital = Math.Round(p.CuotaMensual - interes, 2);
                 decimal nuevoSaldo = Math.Round(saldo - capital, 2);
-
                 if (mes == p.PlazoMeses) nuevoSaldo = 0;
 
                 tabla.Add(new Pago
@@ -57,50 +52,36 @@ namespace BusinessLogic
                     CuotaMensual = p.CuotaMensual,
                     Pagado = false
                 });
-
                 saldo = nuevoSaldo;
             }
             return tabla;
-        }// Crea un préstamo aplicando todas las reglas del negocio
+        }
+
         public string CrearPrestamo(Prestamo p, decimal sueldoCliente, string garantiaCliente)
         {
-            // Regla 1: no prestar más de 4 veces el sueldo
-            if (p.Monto > sueldoCliente * 4)
-                return "Error: El monto supera 4 veces el sueldo del cliente.";
+            if (p.Monto > sueldoCliente * 4) return "Error: Supera 4 veces el sueldo.";
+            if (string.IsNullOrWhiteSpace(garantiaCliente)) return "Error: Falta garantía.";
 
-            // Regla 2: verificar que tenga garantía
-            if (string.IsNullOrWhiteSpace(garantiaCliente))
-                return "Error: El cliente no tiene garantía registrada.";
-
-            // Regla 3: verificar fondo disponible
             var fondo = fondoDAO.Obtener();
-            if (fondo == null || fondo.Monto < p.Monto)
-                return "Error: La entidad no tiene fondos suficientes.";
+            if (fondo == null || fondo.Monto < p.Monto) return "Error: Fondos insuficientes.";
 
-            // Calcular tasa y cuota
             p.TasaInteres = ObtenerTasa(p.PlazoMeses);
             p.CuotaMensual = CalcularCuota(p.Monto, p.TasaInteres, p.PlazoMeses);
-            p.InteresGenerado = Math.Round((p.CuotaMensual * p.PlazoMeses) - p.Monto, 2);
-            p.MontoTotal = p.Monto + p.InteresGenerado;
             p.FechaInicio = DateTime.Today;
 
-            
             prestamoDAO.Insertar(p);
-
-            // Descontar del fondo
             fondoDAO.Actualizar(fondo.Monto - p.Monto);
-
             return "OK";
         }
 
-        public List<Prestamo> ObtenerPorCliente(int clienteId)
+        public void AplicarAbonoExtraordinario(int prestamoId, decimal montoExtra)
         {
-            return prestamoDAO.ObtenerPorCliente(clienteId);
-        }
-
-        public List<Prestamo> ObtenerTodos()
-        {
-            return prestamoDAO.ObtenerTodos();
+            var prestamo = prestamoDAO.ObtenerPorId(prestamoId);
+            if (prestamo != null)
+            {
+                prestamo.Monto -= montoExtra;
+                GenerarTablaAmortizacion(prestamo);
+            }
         }
     }
 }
