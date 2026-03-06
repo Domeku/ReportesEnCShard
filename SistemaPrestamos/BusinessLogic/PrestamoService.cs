@@ -17,7 +17,7 @@ namespace BusinessLogic
             if (plazoMeses >= 1 && plazoMeses <= 3) return 10m;
             if (plazoMeses >= 4 && plazoMeses <= 6) return 8m;
             if (plazoMeses >= 7 && plazoMeses <= 12) return 7m;
-            return 5m; // más de 12 meses
+            return 5m;
         }
 
         // Calcula la cuota mensual (fórmula francesa)
@@ -61,16 +61,18 @@ namespace BusinessLogic
                 saldo = nuevoSaldo;
             }
             return tabla;
-        }
-
-        // Crea un préstamo aplicando todas las reglas del negocio
-        public string CrearPrestamo(Prestamo p, decimal sueldoCliente)
+        }// Crea un préstamo aplicando todas las reglas del negocio
+        public string CrearPrestamo(Prestamo p, decimal sueldoCliente, string garantiaCliente)
         {
             // Regla 1: no prestar más de 4 veces el sueldo
             if (p.Monto > sueldoCliente * 4)
                 return "Error: El monto supera 4 veces el sueldo del cliente.";
 
-            // Regla 2: verificar fondo disponible
+            // Regla 2: verificar que tenga garantía
+            if (string.IsNullOrWhiteSpace(garantiaCliente))
+                return "Error: El cliente no tiene garantía registrada.";
+
+            // Regla 3: verificar fondo disponible
             var fondo = fondoDAO.Obtener();
             if (fondo == null || fondo.Monto < p.Monto)
                 return "Error: La entidad no tiene fondos suficientes.";
@@ -82,7 +84,7 @@ namespace BusinessLogic
             p.MontoTotal = p.Monto + p.InteresGenerado;
             p.FechaInicio = DateTime.Today;
 
-            // Guardar préstamo
+            
             prestamoDAO.Insertar(p);
 
             // Descontar del fondo

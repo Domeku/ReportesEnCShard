@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using System.Data.SqlClient;
 using Entitiess;
 
@@ -6,140 +6,39 @@ namespace DataAcess
 {
     public class ClienteDAO
     {
+        // Este es el método que ya tenía la Persona 1
         public void Insertar(Cliente c)
         {
             using (var con = Conexion.ObtenerConexion())
             {
                 con.Open();
-                string sql = @"INSERT INTO Clientes 
-                    (NombreCompleto, Correo, Telefono, Direccion, Garantia, Sueldo, EsMoroso)
-                    VALUES (@nombre, @correo, @telefono, @direccion, @garantia, @sueldo, 0)";
-                var cmd = new SqlCommand(sql, con);
-                cmd.Parameters.AddWithValue("@nombre", c.NombreCompleto);
-                cmd.Parameters.AddWithValue("@correo", c.Correo);
-                cmd.Parameters.AddWithValue("@telefono", c.Telefono);
-                cmd.Parameters.AddWithValue("@direccion", c.Direccion);
-                cmd.Parameters.AddWithValue("@garantia", c.Garantia);
-                cmd.Parameters.AddWithValue("@sueldo", c.Sueldo);
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        public Cliente ObtenerPorId(int id)
-        {
-            using (var con = Conexion.ObtenerConexion())
-            {
-                con.Open();
-                string sql = "SELECT * FROM Clientes WHERE Id = @id";
-                var cmd = new SqlCommand(sql, con);
-                cmd.Parameters.AddWithValue("@id", id);
-                var reader = cmd.ExecuteReader();
-                if (reader.Read())
+                var query = "INSERT INTO Cliente (NombreCompleto, Correo, Telefono, Direccion, Garantia, Sueldo, EsMoroso) VALUES (@nom, @cor, @tel, @dir, @gar, @suel, @mor)";
+                using (var cmd = new SqlCommand(query, con))
                 {
-                    return new Cliente
-                    {
-                        Id = (int)reader["Id"],
-                        NombreCompleto = reader["NombreCompleto"].ToString(),
-                        Correo = reader["Correo"].ToString(),
-                        Telefono = reader["Telefono"].ToString(),
-                        Direccion = reader["Direccion"].ToString(),
-                        Garantia = reader["Garantia"].ToString(),
-                        Sueldo = (decimal)reader["Sueldo"],
-                        EsMoroso = (bool)reader["EsMoroso"]
-                    };
-                }
-                return null;
-            }
-        }
-
-        public List<Cliente> ObtenerTodos()
-        {
-            var lista = new List<Cliente>();
-            using (var con = Conexion.ObtenerConexion())
-            {
-                con.Open();
-                string sql = "SELECT * FROM Clientes";
-                var cmd = new SqlCommand(sql, con);
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    lista.Add(new Cliente
-                    {
-                        Id = (int)reader["Id"],
-                        NombreCompleto = reader["NombreCompleto"].ToString(),
-                        Correo = reader["Correo"].ToString(),
-                        Telefono = reader["Telefono"].ToString(),
-                        Direccion = reader["Direccion"].ToString(),
-                        Garantia = reader["Garantia"].ToString(),
-                        Sueldo = (decimal)reader["Sueldo"],
-                        EsMoroso = (bool)reader["EsMoroso"]
-                    });
+                    cmd.Parameters.AddWithValue("@nom", c.NombreCompleto);
+                    cmd.Parameters.AddWithValue("@cor", c.Correo);
+                    cmd.Parameters.AddWithValue("@tel", c.Telefono);
+                    cmd.Parameters.AddWithValue("@dir", c.Direccion);
+                    cmd.Parameters.AddWithValue("@gar", c.Garantia);
+                    cmd.Parameters.AddWithValue("@suel", c.Sueldo);
+                    cmd.Parameters.AddWithValue("@mor", c.EsMoroso);
+                    cmd.ExecuteNonQuery();
                 }
             }
-            return lista;
         }
 
-        public void Actualizar(Cliente c)
-        {
-            using (var con = Conexion.ObtenerConexion())
-            {
-                con.Open();
-                string sql = @"UPDATE Clientes SET 
-                    NombreCompleto = @nombre,
-                    Correo = @correo,
-                    Telefono = @telefono,
-                    Direccion = @direccion,
-                    Garantia = @garantia,
-                    Sueldo = @sueldo
-                    WHERE Id = @id";
-                var cmd = new SqlCommand(sql, con);
-                cmd.Parameters.AddWithValue("@nombre", c.NombreCompleto);
-                cmd.Parameters.AddWithValue("@correo", c.Correo);
-                cmd.Parameters.AddWithValue("@telefono", c.Telefono);
-                cmd.Parameters.AddWithValue("@direccion", c.Direccion);
-                cmd.Parameters.AddWithValue("@garantia", c.Garantia);
-                cmd.Parameters.AddWithValue("@sueldo", c.Sueldo);
-                cmd.Parameters.AddWithValue("@id", c.Id);
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        public List<Cliente> ObtenerMorosos()
-        {
-            var lista = new List<Cliente>();
-            using (var con = Conexion.ObtenerConexion())
-            {
-                con.Open();
-                string sql = "SELECT * FROM Clientes WHERE EsMoroso = 1";
-                var cmd = new SqlCommand(sql, con);
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    lista.Add(new Cliente
-                    {
-                        Id = (int)reader["Id"],
-                        NombreCompleto = reader["NombreCompleto"].ToString(),
-                        Correo = reader["Correo"].ToString(),
-                        Telefono = reader["Telefono"].ToString(),
-                        Direccion = reader["Direccion"].ToString(),
-                        Garantia = reader["Garantia"].ToString(),
-                        Sueldo = (decimal)reader["Sueldo"],
-                        EsMoroso = (bool)reader["EsMoroso"]
-                    });
-                }
-            }
-            return lista;
-        }
-
+        // Este es el método que agregamos nosotros
         public void MarcarMoroso(int clienteId)
         {
             using (var con = Conexion.ObtenerConexion())
             {
                 con.Open();
-                string sql = "UPDATE Clientes SET EsMoroso = 1 WHERE Id = @id";
-                var cmd = new SqlCommand(sql, con);
-                cmd.Parameters.AddWithValue("@id", clienteId);
-                cmd.ExecuteNonQuery();
+                var query = "UPDATE Cliente SET EsMoroso = 1 WHERE Id = @id";
+                using (var cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@id", clienteId);
+                    cmd.ExecuteNonQuery();
+                }
             }
         }
     }

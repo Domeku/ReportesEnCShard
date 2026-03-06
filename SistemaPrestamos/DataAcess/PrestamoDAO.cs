@@ -12,50 +12,46 @@ namespace DataAcess
             using (var con = Conexion.ObtenerConexion())
             {
                 con.Open();
-                string sql = @"INSERT INTO Prestamos 
-                    (ClienteId, Monto, PlazoMeses, TasaInteres, InteresGenerado, MontoTotal, CuotaMensual, FechaInicio, Estado)
-                    VALUES (@clienteId, @monto, @plazo, @tasa, @interes, @total, @cuota, @fecha, 'Activo')";
-                var cmd = new SqlCommand(sql, con);
-                cmd.Parameters.AddWithValue("@clienteId", p.ClienteId);
-                cmd.Parameters.AddWithValue("@monto", p.Monto);
-                cmd.Parameters.AddWithValue("@plazo", p.PlazoMeses);
-                cmd.Parameters.AddWithValue("@tasa", p.TasaInteres);
-                cmd.Parameters.AddWithValue("@interes", p.InteresGenerado);
-                cmd.Parameters.AddWithValue("@total", p.MontoTotal);
-                cmd.Parameters.AddWithValue("@cuota", p.CuotaMensual);
-                cmd.Parameters.AddWithValue("@fecha", p.FechaInicio);
-                cmd.ExecuteNonQuery();
+                var query = @"INSERT INTO Prestamo (ClienteId, Monto, PlazoMeses, TasaInteres, CuotaMensual, FechaInicio, Estado) 
+                              VALUES (@cid, @monto, @plazo, @tasa, @cuota, @fecha, 'Activo')";
+                using (var cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@cid", p.ClienteId);
+                    cmd.Parameters.AddWithValue("@monto", p.Monto);
+                    cmd.Parameters.AddWithValue("@plazo", p.PlazoMeses);
+                    cmd.Parameters.AddWithValue("@tasa", p.TasaInteres);
+                    cmd.Parameters.AddWithValue("@cuota", p.CuotaMensual);
+                    cmd.Parameters.AddWithValue("@fecha", p.FechaInicio);
+                    cmd.ExecuteNonQuery();
+                }
             }
         }
 
-        public List<Prestamo> ObtenerPorCliente(int clienteId)
+        // ESTE ES EL MÉTODO QUE FALTA Y CAUSA EL ERROR
+        public Prestamo ObtenerPorId(int id)
         {
-            var lista = new List<Prestamo>();
             using (var con = Conexion.ObtenerConexion())
             {
                 con.Open();
-                string sql = "SELECT * FROM Prestamos WHERE ClienteId = @clienteId";
-                var cmd = new SqlCommand(sql, con);
-                cmd.Parameters.AddWithValue("@clienteId", clienteId);
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                var query = "SELECT * FROM Prestamo WHERE Id = @id";
+                using (var cmd = new SqlCommand(query, con))
                 {
-                    lista.Add(new Prestamo
+                    cmd.Parameters.AddWithValue("@id", id);
+                    using (var dr = cmd.ExecuteReader())
                     {
-                        Id = (int)reader["Id"],
-                        ClienteId = (int)reader["ClienteId"],
-                        Monto = (decimal)reader["Monto"],
-                        PlazoMeses = (int)reader["PlazoMeses"],
-                        TasaInteres = (decimal)reader["TasaInteres"],
-                        InteresGenerado = (decimal)reader["InteresGenerado"],
-                        MontoTotal = (decimal)reader["MontoTotal"],
-                        CuotaMensual = (decimal)reader["CuotaMensual"],
-                        FechaInicio = (DateTime)reader["FechaInicio"],
-                        Estado = reader["Estado"].ToString()
-                    });
+                        if (dr.Read())
+                        {
+                            return new Prestamo
+                            {
+                                Id = (int)dr["Id"],
+                                ClienteId = (int)dr["ClienteId"],
+                                Monto = (decimal)dr["Monto"]
+                            };
+                        }
+                    }
                 }
             }
-            return lista;
+            return null;
         }
 
         public List<Prestamo> ObtenerTodos()
@@ -64,24 +60,48 @@ namespace DataAcess
             using (var con = Conexion.ObtenerConexion())
             {
                 con.Open();
-                string sql = "SELECT * FROM Prestamos";
-                var cmd = new SqlCommand(sql, con);
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                var query = "SELECT * FROM Prestamo";
+                using (var cmd = new SqlCommand(query, con))
                 {
-                    lista.Add(new Prestamo
+                    using (var dr = cmd.ExecuteReader())
                     {
-                        Id = (int)reader["Id"],
-                        ClienteId = (int)reader["ClienteId"],
-                        Monto = (decimal)reader["Monto"],
-                        PlazoMeses = (int)reader["PlazoMeses"],
-                        TasaInteres = (decimal)reader["TasaInteres"],
-                        InteresGenerado = (decimal)reader["InteresGenerado"],
-                        MontoTotal = (decimal)reader["MontoTotal"],
-                        CuotaMensual = (decimal)reader["CuotaMensual"],
-                        FechaInicio = (DateTime)reader["FechaInicio"],
-                        Estado = reader["Estado"].ToString()
-                    });
+                        while (dr.Read())
+                        {
+                            lista.Add(new Prestamo
+                            {
+                                Id = (int)dr["Id"],
+                                ClienteId = (int)dr["ClienteId"],
+                                Monto = (decimal)dr["Monto"]
+                            });
+                        }
+                    }
+                }
+            }
+            return lista;
+        }
+
+        public List<Prestamo> ObtenerPorCliente(int clienteId)
+        {
+            var lista = new List<Prestamo>();
+            using (var con = Conexion.ObtenerConexion())
+            {
+                con.Open();
+                var query = "SELECT * FROM Prestamo WHERE ClienteId = @cid";
+                using (var cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@cid", clienteId);
+                    using (var dr = cmd.ExecuteReader())
+                    {
+                        while (dr.Read())
+                        {
+                            lista.Add(new Prestamo
+                            {
+                                Id = (int)dr["Id"],
+                                ClienteId = (int)dr["ClienteId"],
+                                Monto = (decimal)dr["Monto"]
+                            });
+                        }
+                    }
                 }
             }
             return lista;
