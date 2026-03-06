@@ -10,19 +10,19 @@ namespace DataAcess
             using (var con = Conexion.ObtenerConexion())
             {
                 con.Open();
-                string sql = "SELECT TOP 1 * FROM FondoBase";
-                var cmd = new SqlCommand(sql, con);
-                var reader = cmd.ExecuteReader();
-                if (reader.Read())
+                var query = "SELECT TOP 1 * FROM FondoBase";
+                using (var cmd = new SqlCommand(query, con))
                 {
-                    return new FondoBase
+                    using (var dr = cmd.ExecuteReader())
                     {
-                        Id = (int)reader["Id"],
-                        Monto = (decimal)reader["Monto"]
-                    };
+                        if (dr.Read())
+                        {
+                            return new FondoBase { Id = (int)dr["Id"], Monto = (decimal)dr["Monto"] };
+                        }
+                    }
                 }
-                return null;
             }
+            return null;
         }
 
         public void Actualizar(decimal nuevoMonto)
@@ -30,10 +30,12 @@ namespace DataAcess
             using (var con = Conexion.ObtenerConexion())
             {
                 con.Open();
-                string sql = "UPDATE FondoBase SET Monto = @monto";
-                var cmd = new SqlCommand(sql, con);
-                cmd.Parameters.AddWithValue("@monto", nuevoMonto);
-                cmd.ExecuteNonQuery();
+                var query = "UPDATE FondoBase SET Monto = @monto";
+                using (var cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@monto", nuevoMonto);
+                    cmd.ExecuteNonQuery();
+                }
             }
         }
     }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
 using Entitiess;
 
@@ -7,65 +6,48 @@ namespace DataAcess
 {
     public class PagoDAO
     {
-        public void Insertar(Pago p)
+        public Pago ObtenerPorId(int id)
         {
             using (var con = Conexion.ObtenerConexion())
             {
                 con.Open();
-                string sql = @"INSERT INTO Pagos 
-                    (PrestamoId, NumeroCuota, SaldoAnterior, InteresPagado, MontoAbonado, NuevoSaldo, CuotaMensual, Pagado)
-                    VALUES (@prestamoId, @numeroCuota, @saldoAnterior, @interesPagado, @montoAbonado, @nuevoSaldo, @cuotaMensual, 0)";
-                var cmd = new SqlCommand(sql, con);
-                cmd.Parameters.AddWithValue("@prestamoId", p.PrestamoId);
-                cmd.Parameters.AddWithValue("@numeroCuota", p.NumeroCuota);
-                cmd.Parameters.AddWithValue("@saldoAnterior", p.SaldoAnterior);
-                cmd.Parameters.AddWithValue("@interesPagado", p.InteresPagado);
-                cmd.Parameters.AddWithValue("@montoAbonado", p.MontoAbonado);
-                cmd.Parameters.AddWithValue("@nuevoSaldo", p.NuevoSaldo);
-                cmd.Parameters.AddWithValue("@cuotaMensual", p.CuotaMensual);
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        public List<Pago> ObtenerPorPrestamo(int prestamoId)
-        {
-            var lista = new List<Pago>();
-            using (var con = Conexion.ObtenerConexion())
-            {
-                con.Open();
-                string sql = "SELECT * FROM Pagos WHERE PrestamoId = @prestamoId ORDER BY NumeroCuota";
-                var cmd = new SqlCommand(sql, con);
-                cmd.Parameters.AddWithValue("@prestamoId", prestamoId);
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                var query = "SELECT * FROM Pago WHERE Id = @id";
+                using (var cmd = new SqlCommand(query, con))
                 {
-                    lista.Add(new Pago
+                    cmd.Parameters.AddWithValue("@id", id);
+                    using (var dr = cmd.ExecuteReader())
                     {
-                        Id = (int)reader["Id"],
-                        PrestamoId = (int)reader["PrestamoId"],
-                        NumeroCuota = (int)reader["NumeroCuota"],
-                        SaldoAnterior = (decimal)reader["SaldoAnterior"],
-                        InteresPagado = (decimal)reader["InteresPagado"],
-                        MontoAbonado = (decimal)reader["MontoAbonado"],
-                        NuevoSaldo = (decimal)reader["NuevoSaldo"],
-                        CuotaMensual = (decimal)reader["CuotaMensual"],
-                        Pagado = (bool)reader["Pagado"]
-                    });
+                        if (dr.Read())
+                        {
+                            return new Pago
+                            {
+                                Id = (int)dr["Id"],
+                                PrestamoId = (int)dr["PrestamoId"],
+                                NumeroCuota = (int)dr["NumeroCuota"],
+                                Pagado = (bool)dr["Pagado"],
+                                CuotaMensual = (decimal)dr["CuotaMensual"],
+                                FechaPago = dr["FechaPago"] == DBNull.Value ? (DateTime?)null : (DateTime)dr["FechaPago"]
+                            };
+                        }
+                    }
                 }
             }
-            return lista;
+            return null;
         }
 
-        public void MarcarPagado(int pagoId, DateTime fechaPago)
+        public void Actualizar(Pago p)
         {
             using (var con = Conexion.ObtenerConexion())
             {
                 con.Open();
-                string sql = "UPDATE Pagos SET Pagado = 1, FechaPago = @fecha WHERE Id = @id";
-                var cmd = new SqlCommand(sql, con);
-                cmd.Parameters.AddWithValue("@fecha", fechaPago);
-                cmd.Parameters.AddWithValue("@id", pagoId);
-                cmd.ExecuteNonQuery();
+                var query = "UPDATE Pago SET Pagado = @pagado, FechaPago = @fecha WHERE Id = @id";
+                using (var cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@pagado", p.Pagado);
+                    cmd.Parameters.AddWithValue("@fecha", (object)p.FechaPago ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@id", p.Id);
+                    cmd.ExecuteNonQuery();
+                }
             }
         }
     }
